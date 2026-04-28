@@ -1,0 +1,7 @@
+.venv/
+.cache/
+__pycache__/
+*.pyc
+data/indexes/
+data/raw/parent_guidance/*_files/
+

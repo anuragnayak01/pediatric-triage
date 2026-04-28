@@ -1,0 +1,58 @@
+[
+  {
+    "source_file": "data\\raw\\clinical_guidelines\\ESI_v4_Handbook.pdf",
+    "pages": 114,
+    "extractor": "pymupdf",
+    "total_extracted_chars": 404480,
+    "empty_pages": 0,
+    "chunks": 174
+  },
+  {
+    "source_file": "data\\raw\\clinical_guidelines\\WHO_ETAT_2005.pdf",
+    "pages": 83,
+    "extractor": "pymupdf",
+    "total_extracted_chars": 135461,
+    "empty_pages": 0,
+    "chunks": 104
+  },
+  {
+    "source_file": "data\\raw\\clinical_guidelines\\WHO_Pediatric_ETAT_2016.pdf",
+    "pages": 88,
+    "extractor": "pymupdf",
+    "total_extracted_chars": 269881,
+    "empty_pages": 2,
+    "chunks": 127
+  },
+  {
+    "source_file": "data\\raw\\parent_guidance\\AAP_Fever_When_To_Call.html",
+    "pages": null,
+    "extractor": "beautifulsoup",
+    "total_extracted_chars": 1584,
+    "empty_pages": 0,
+    "chunks": 1
+  },
+  {
+    "source_file": "data\\raw\\parent_guidance\\Mayo_Fever_Children.html",
+    "pages": null,
+    "extractor": "beautifulsoup",
+    "total_extracted_chars": 688,
+    "empty_pages": 0,
+    "chunks": 1
+  },
+  {
+    "source_file": "data\\raw\\parent_guidance\\Mayo_Sick_Baby.html",
+    "pages": null,
+    "extractor": "beautifulsoup",
+    "total_extracted_chars": 8428,
+    "empty_pages": 0,
+    "chunks": 2
+  },
+  {
+    "source_file": "data\\raw\\parent_guidance\\Mayo_Vomiting_Children.html",
+    "pages": null,
+    "extractor": "beautifulsoup",
+    "total_extracted_chars": 1093,
+    "empty_pages": 0,
+    "chunks": 1
+  }
+]
