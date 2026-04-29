@@ -49,7 +49,10 @@ st.markdown(
     [data-testid="stSidebar"] .stMarkdown p,
     [data-testid="stSidebar"] label,
     [data-testid="stSidebar"] span,
-    [data-testid="stSidebar"] .stRadio label { color: rgba(255,255,255,0.8) !important; }
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] div,
+    [data-testid="stSidebar"] .stRadio label,
+    [data-testid="stSidebar"] .stRadio div[data-testid="stMarkdownContainer"] p { color: #ffffff !important; }
     [data-testid="stSidebar"] h1,
     [data-testid="stSidebar"] h2,
     [data-testid="stSidebar"] h3,
