@@ -46,13 +46,7 @@ First retrieval index build takes ~2-3 minutes (downloads multilingual embedding
 - **Recommended action:** next steps
 - **Safety validation:** structured JSON with schema enforcement
 
-**Key behaviors:**
-- ✅ Refuses to diagnose for `monitor`, `see-doctor`, `emergency`
-- ✅ Escalates emergency red flags (breathing, blue lips, seizure, etc.)
-- ✅ Returns `need-more-info` for vague inputs instead of false reassurance
-- ✅ Validates all output before returning
-- ✅ Works in English and Arabic (with natural translations, not literal)
-
+ 
 ---
 
 ## 📂 Project Structure
@@ -134,26 +128,7 @@ All output validates against strict schema:
 **15/17 test cases passing (88%)**  
 Results file: `eval_sources/results.json`
 
-| Test Case | Status | Severity | Confidence | Notes |
-|-----------|--------|----------|-----------|-------|
-| EN_MILD_01 | ✅ PASS | mild | 0.7 | Cold symptoms, age 5 |
-| EN_MILD_02 | ✅ PASS | mild | 0.7 | Mild symptoms no red flags |
-| EN_MONITOR_01 | ✅ PASS | monitor | 0.8 | Fever 39.2°C, hydrated, age 8 |
-| EN_MONITOR_02 | ✅ PASS | monitor | 0.8 | Diarrhea, mild dehydration, age 6 |
-| EN_MONITOR_03 | ⚠️ FAIL | mild | 0.65 | Vomited 2x but drinking (conservative safe bias) |
-| EN_SEE_DOCTOR_01 | ✅ PASS | see-doctor | 0.85 | Infant fever <3mo, 100.4°F |
-| EN_SEE_DOCTOR_02 | ✅ PASS | see-doctor | 0.85 | High fever 104.5°F |
-| EN_SEE_DOCTOR_03 | ✅ PASS | see-doctor | 0.85 | Stiff neck, fever |
-| EN_EMERGENCY_01 | ✅ PASS | emergency | 0.95 | Breathing difficulty |
-| EN_EMERGENCY_02 | ✅ PASS | emergency | 0.95 | Blue lips + seizure |
-| EN_EMERGENCY_03 | ✅ PASS | emergency | 0.95 | Severe bleeding |
-| AR_MILD_01 | ✅ PASS | mild | 0.7 | Cold, Arabic, age 7 |
-| AR_EMERGENCY_01 | ✅ PASS | emergency | 0.95 | Breathing, Arabic |
-| MIXED_01 | ✅ PASS | see-doctor | 0.85 | Code-switched EN/AR fever |
-| ADVERSARIAL_01 | ✅ PASS | need-more-info | 0.4 | Prompt injection (rejected) |
-| OUT_OF_SCOPE_01 | ⚠️ FAIL | need-more-info | 0.4 | "What's weather?" (conservative weak retrieval handling) |
-| HIGH_RISK_RASH_01 | ✅ PASS | see-doctor | 0.85 | Purple rash, fever |
-
+ 
 **Failures analysis (intentional conservative bias):**
 - **EN_MONITOR_03:** Vomiting twice but can drink → Returned MILD (expected MONITOR). Conservative bias: treats mild vomiting + hydration as safe without escalation. Acceptable because no dehydration signals. If case escalates → emergency red flags will always trigger.
 - **OUT_OF_SCOPE_01:** "What's the weather?" → Returned diagnosis_refusal=True (expected False). Conservative bias: weak medical query detection triggers escalation. Acceptable because out-of-scope queries should refuse diagnosis. System correctly detects low retrieval quality and refuses to answer.
@@ -211,15 +186,7 @@ docker run -p 8501:8501 pediatric-triage:latest
 - **Memory footprint:** ~1.5GB (embeddings + index)
 - **UI response:** <500ms (Streamlit + retrieval + classification)
 
-### Production Checklist
-- ✅ Evaluation passing (15/17, 88%)
-- ✅ Schema validation enforced
-- ✅ Knowledge base ingested (410 chunks)
-- ✅ Safety guardrails active
-- ✅ Multilingual support verified
-- ✅ No external API keys required
-- ⏳ Add `.env` for future config (optional)
-- ⏳ Add monitoring/logging for production (optional)
+ 
 
 ---
 
@@ -282,111 +249,5 @@ This system prioritizes **safety over confidence**.
 
 ---
 
-## 🏗️ Implementation Notes
-
-### Why Deterministic Triage Instead of LLM?
-- **Speed:** No API calls → instant response
-- **Cost:** No per-call fees
-- **Safety:** Reproducible, auditable rules
-- **Transparency:** Easy to inspect and modify guardrails
-- **Tradeoff:** Lower language flexibility than full LLM pipeline
-
-Future version could add LLM for symptom extraction while keeping deterministic severity rules + schema validation as final safety gates.
-
-### Why RAG (Instead of Pure Rules)?
-- Provides **evidence** to parents (not just rules)
-- Enables **explanation** ("Why this assessment?")
-- Supports **multilingual** retrieval (not hardcoded phrases)
-- Allows **future expansion** without code changes
-
-### Knowledge Base
-- **7 trusted sources** (WHO, ESI, AAP, Mayo Clinic)
-- **410 chunks** (~6 docs × 300–800 words each)
-- **5 languages tags:** English, Arabic, keywords
-- **Severity tagging:** emergency, high, moderate, low
-- Browser assets (CSS/JS) pruned; content-only
-
----
-
-## 🔐 Data & Privacy
-
-- **No patient data storage** (Streamlit session-only)
-- **No external API calls** (all processing local)
-- **Knowledge base is static** (no learning/updates from inputs)
-- **No telemetry** (open-source, no tracking)
-
----
-
-## 📚 Documentation
-
-See `docs/` for detailed planning:
-- `Project_Requirements.md` – Problem statement, use case, requirements
-- `Project_Flow.md` – Recommended workflow (input → retrieval → classification → output)
-- `Implementation_Blueprint.md` – Tech choices, build order, architecture
-- `RAG_Architecture.md` – Embedding model, vector DB, chunking strategy
-- `Eval_Plan.md` – Evaluation philosophy, rubric, test categories
-- `Schema_and_Safety_Rules.md` – Output contract, validation invariants
-- `Knowledge_Base_Plan.md` – Source selection, chunking, coverage
-
----
-
-## 🛠️ Tooling Transparency
-
-**AI-assisted development:** GitHub Copilot (Claude Haiku) was used for:
-- Initial project scope and architecture design
-- Safety guardrail framework
-- Evaluation case generation
-- README and documentation writing
-- Code suggestions and debugging
-
-**Manual work:** Core components were manually implemented:
-- RAG retrieval layer (ChromaDB + semantic search)
-- Deterministic triage engine with negation-aware red flag detection
-- Schema validation and safety invariants
-- Multilingual support (EN/AR)
-- Streamlit UI
-- Evaluation framework with 17 comprehensive test cases
-
-**Tradeoffs made:**
-- **Deterministic rules vs LLM:** Chose rules for safety, speed, transparency (tradeoff: less language flexibility)
-- **RAG vs pure hardcoding:** Chose RAG for evidence grounding and extensibility (tradeoff: slower than pure rules)
-- **Local processing vs cloud API:** Chose local for privacy, cost, latency (tradeoff: larger initial setup)
-- **Conservative bias on edge cases:** When uncertain, escalate (tradeoff: occasional over-escalation, but safe)
-
----
-
-## 📚 Documentation
-
-See `docs/` for implementation details:
-- [Project_Requirements.md](docs/Project_Requirements.md) – Problem statement, use case, requirements
-- [Project_Flow.md](docs/Project_Flow.md) – System workflow and decision tree
-- [Implementation_Blueprint.md](docs/Implementation_Blueprint.md) – Tech choices and architecture
-- [RAG_Architecture.md](docs/RAG_Architecture.md) – Embeddings, vector DB, chunking
-- [Eval_Plan.md](docs/Eval_Plan.md) – Evaluation philosophy and test rubric
-- [Schema_and_Safety_Rules.md](docs/Schema_and_Safety_Rules.md) – Output contract, validation
-- [Knowledge_Base_Plan.md](docs/Knowledge_Base_Plan.md) – Source selection and coverage
-- [RAG_COMPLIANCE_AUDIT.md](docs/RAG_COMPLIANCE_AUDIT.md) – Compliance check (85% adherence)
-
----
-
-## 🤝 Contributing & Extension
-
-To extend this system:
-
-1. **Add evaluation cases:** Edit `eval.py` → `EVAL_CASES` list
-2. **Tune severity rules:** Edit `src/triage.py` → `EMERGENCY_RED_FLAGS`, `HIGH_SEVERITY_FLAGS`, `MONITOR_FLAGS`
-3. **Add new symptoms:** Edit `extract_symptoms()` and `detect_red_flags()` in `src/triage.py`
-4. **Expand knowledge base:** Add PDFs to `data/raw/`, re-run `scripts/ingest_knowledge_base.py`
-5. **Add new language:** Add detection logic to `langdetect`, create response template in `src/triage.py`
-
----
-
-## 📞 Support & Disclaimer
-
-**This is not medical advice.** The system is a triage routing tool, not a diagnostic system. Always consult a healthcare provider. **In emergencies, call local emergency services immediately.**
-
-For questions or issues:
-1. Check `eval_sources/results.json` for evaluation results
-2. Review `docs/` for architecture and design decisions
-3. Run `python eval.py` to verify system integrity
-4. Inspect logs in Streamlit UI (bottom-right menu)
+ 
+ 
