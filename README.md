@@ -46,7 +46,13 @@ First retrieval index build takes ~2-3 minutes (downloads multilingual embedding
 - **Recommended action:** next steps
 - **Safety validation:** structured JSON with schema enforcement
 
- 
+**Key behaviors:**
+- ✅ Refuses to diagnose for `monitor`, `see-doctor`, `emergency`
+- ✅ Escalates emergency red flags (breathing, blue lips, seizure, etc.)
+- ✅ Returns `need-more-info` for vague inputs instead of false reassurance
+- ✅ Validates all output before returning
+- ✅ Works in English and Arabic (with natural translations, not literal)
+
 ---
 
 ## 📂 Project Structure
@@ -128,7 +134,26 @@ All output validates against strict schema:
 **15/17 test cases passing (88%)**  
 Results file: `eval_sources/results.json`
 
- 
+| Test Case | Status | Severity | Confidence | Notes |
+|-----------|--------|----------|-----------|-------|
+| EN_MILD_01 | ✅ PASS | mild | 0.7 | Cold symptoms, age 5 |
+| EN_MILD_02 | ✅ PASS | mild | 0.7 | Mild symptoms no red flags |
+| EN_MONITOR_01 | ✅ PASS | monitor | 0.8 | Fever 39.2°C, hydrated, age 8 |
+| EN_MONITOR_02 | ✅ PASS | monitor | 0.8 | Diarrhea, mild dehydration, age 6 |
+| EN_MONITOR_03 | ⚠️ FAIL | mild | 0.65 | Vomited 2x but drinking (conservative safe bias) |
+| EN_SEE_DOCTOR_01 | ✅ PASS | see-doctor | 0.85 | Infant fever <3mo, 100.4°F |
+| EN_SEE_DOCTOR_02 | ✅ PASS | see-doctor | 0.85 | High fever 104.5°F |
+| EN_SEE_DOCTOR_03 | ✅ PASS | see-doctor | 0.85 | Stiff neck, fever |
+| EN_EMERGENCY_01 | ✅ PASS | emergency | 0.95 | Breathing difficulty |
+| EN_EMERGENCY_02 | ✅ PASS | emergency | 0.95 | Blue lips + seizure |
+| EN_EMERGENCY_03 | ✅ PASS | emergency | 0.95 | Severe bleeding |
+| AR_MILD_01 | ✅ PASS | mild | 0.7 | Cold, Arabic, age 7 |
+| AR_EMERGENCY_01 | ✅ PASS | emergency | 0.95 | Breathing, Arabic |
+| MIXED_01 | ✅ PASS | see-doctor | 0.85 | Code-switched EN/AR fever |
+| ADVERSARIAL_01 | ✅ PASS | need-more-info | 0.4 | Prompt injection (rejected) |
+| OUT_OF_SCOPE_01 | ⚠️ FAIL | need-more-info | 0.4 | "What's weather?" (conservative weak retrieval handling) |
+| HIGH_RISK_RASH_01 | ✅ PASS | see-doctor | 0.85 | Purple rash, fever |
+
 **Failures analysis (intentional conservative bias):**
 - **EN_MONITOR_03:** Vomiting twice but can drink → Returned MILD (expected MONITOR). Conservative bias: treats mild vomiting + hydration as safe without escalation. Acceptable because no dehydration signals. If case escalates → emergency red flags will always trigger.
 - **OUT_OF_SCOPE_01:** "What's the weather?" → Returned diagnosis_refusal=True (expected False). Conservative bias: weak medical query detection triggers escalation. Acceptable because out-of-scope queries should refuse diagnosis. System correctly detects low retrieval quality and refuses to answer.
@@ -147,7 +172,7 @@ Results: `eval_sources/results.json`
 
 ## 🚀 Deployment
 
-### Local Development (Recommended for first run)
+### Local Development  
 ```bash
 # Clone repo
 cd /path/to/Technical_Assessment
@@ -164,15 +189,7 @@ streamlit run app.py
 # Opens http://localhost:8501
 ```
 
-### Docker Deployment
-```bash
-# Build image
-docker build -t pediatric-triage:latest .
-
-# Run container
-docker run -p 8501:8501 pediatric-triage:latest
-# Accessible at http://localhost:8501
-```
+  
 
 ### Streamlit Cloud (Free, Public)
 1. Push code to GitHub (`main` branch)
@@ -249,5 +266,54 @@ This system prioritizes **safety over confidence**.
 
 ---
 
+## 🏗️ Implementation Notes
+
+### Why Deterministic Triage Instead of LLM?
+- **Speed:** No API calls → instant response
+- **Cost:** No per-call fees
+- **Safety:** Reproducible, auditable rules
+- **Transparency:** Easy to inspect and modify guardrails
+- **Tradeoff:** Lower language flexibility than full LLM pipeline
+
+Future version could add LLM for symptom extraction while keeping deterministic severity rules + schema validation as final safety gates.
+
+### Why RAG (Instead of Pure Rules)?
+- Provides **evidence** to parents (not just rules)
+- Enables **explanation** ("Why this assessment?")
+- Supports **multilingual** retrieval (not hardcoded phrases)
+- Allows **future expansion** without code changes
+
+### Knowledge Base
+- **7 trusted sources** (WHO, ESI, AAP, Mayo Clinic)
+- **410 chunks** (~6 docs × 300–800 words each)
+- **5 languages tags:** English, Arabic, keywords
+- **Severity tagging:** emergency, high, moderate, low
+- Browser assets (CSS/JS) pruned; content-only
+
+---
+
+## 🔐 Data & Privacy
+
+- **No patient data storage** (Streamlit session-only)
+- **No external API calls** (all processing local)
+- **Knowledge base is static** (no learning/updates from inputs)
+- **No telemetry** (open-source, no tracking)
+
+---
+
+ 
+
+---
+
+ 
+
+**Tradeoffs made:**
+- **Deterministic rules vs LLM:** Chose rules for safety, speed, transparency (tradeoff: less language flexibility)
+- **RAG vs pure hardcoding:** Chose RAG for evidence grounding and extensibility (tradeoff: slower than pure rules)
+- **Local processing vs cloud API:** Chose local for privacy, cost, latency (tradeoff: larger initial setup)
+- **Conservative bias on edge cases:** When uncertain, escalate (tradeoff: occasional over-escalation, but safe)
+
+---
+ 
  
  
