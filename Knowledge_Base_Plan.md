@@ -441,13 +441,4 @@ Before moving to model generation, confirm:
 - Retrieval checks pass for core emergency and fever cases.
 - Safety override rules have clear source support.
 
-## Notes For README
-
-The README should explain:
-
-- Why only trusted PDFs were used.
-- Why dialogue datasets were excluded from runtime RAG.
-- How chunks were created.
-- How citations are preserved.
-- How retrieval quality was tested.
-- How weak retrieval leads to uncertainty.
+ 
